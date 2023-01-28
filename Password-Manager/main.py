@@ -1,8 +1,17 @@
 from tkinter import *
 from tkinter import messagebox
 from random import randint, choice, shuffle
+import json
 
 
+def search():
+
+    website = website_entry.get()
+    print(website)
+    with open("data.json", "r") as data_file:
+        website_dict = json.load(data_file)[website]
+        email, password = website_dict.values()
+        messagebox.showinfo(title=website, message=f"Email: {email}\nPassword: {password}")
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 def generate_password():
     pass_entry.delete(0, END)
@@ -25,20 +34,33 @@ def generate_password():
 
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 def save():
-    with open("data.txt", "a") as data_file:
-        website = website_entry.get()
-        user = user_entry.get()
-        password = pass_entry.get()
 
-        if len(website) == 0 or len(password) == 0:
-            messagebox.showerror(title="Empty Fields not allowed", message="Fields are Empty!")
+    website = website_entry.get()
+    user = user_entry.get()
+    password = pass_entry.get()
+    new_data = {
+        website: {
+            "email": user,
+            "password": password,
+        }
+    }
+
+    if len(website) == 0 or len(password) == 0:
+        messagebox.showerror(title="Empty Fields not allowed", message="Fields are Empty!")
+    else:
+        try:
+            with open("data.json", "r") as data_file:
+                data = json.load(data_file)
+                data.update(new_data)
+        except FileNotFoundError:
+            with open("data.json", "w") as data_file:
+                json.dump(new_data, data_file, indent=4)
         else:
-            isit_ok = messagebox.askokcancel(title=website, message=f"These are the details you entered:\nEmail/Username: {user}\n"
-                                                       f"Password: {password}\nIs it ok to save?")
-            if isit_ok:
-                data_file.write(f"{website} | {user} | {password}\n")
-                website_entry.delete(0, END)
-                pass_entry.delete(0, END)
+            with open("data.json", "w") as data_file:
+                json.dump(data, data_file, indent=4)
+        finally:
+            website_entry.delete(0, END)
+            pass_entry.delete(0, END)
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -61,8 +83,8 @@ pass_label = Label(text="Password:", font=("Consolas", 10), bg="white")
 pass_label.grid(row=3, column=0)
 
 # Entry
-website_entry = Entry(width=45)
-website_entry.grid(row=1, column=1, columnspan=2)
+website_entry = Entry(width=35)
+website_entry.grid(row=1, column=1)
 user_entry = Entry(width=45)
 user_entry.insert(0, "dexter@gmail.com")
 user_entry.grid(row=2, column=1, columnspan=2)
@@ -74,5 +96,7 @@ generate_pass_button = Button(text="Generate Password", font=("Consolas", 10), c
 generate_pass_button.grid(row=3, column=2)
 add_button = Button(text="Add", font=("Consolas", 10), width=40, command=save)
 add_button.grid(row=4, column=1, columnspan=2)
+search_button = Button(text="Search", font=("Consolas", 10), command=search)
+search_button.grid(row=1, column=2)
 
 window.mainloop()
